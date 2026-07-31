@@ -384,3 +384,60 @@ describe("station table ordering and filtering", () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+describe("outages that predate collection", () => {
+  const at = (iso: string) => new Date(iso);
+  const collectionStart = at("2026-07-31T09:00:00Z");
+  const now = at("2026-07-31T09:35:00Z");
+
+  const station = {
+    id: "s1",
+    name: "Wembley Park",
+    slug: "wembley-park",
+    latitude: 51.56,
+    longitude: -0.28,
+    modes: ["tube"],
+    lines: ["Jubilee"],
+    resolutionStatus: "RESOLVED" as const,
+  };
+
+  it("flags an outage present at the very first poll", () => {
+    // A lift broken since March looks identical to one broken at 09:00 — the
+    // feed carries no start time — so it must be flagged, not timed.
+    const summary = summariseStation(
+      station,
+      [
+        {
+          openedAt: collectionStart,
+          closedAt: null,
+          firstSeenAt: collectionStart,
+          lastSeenAt: now,
+        },
+      ],
+      collectionStart,
+      now,
+    );
+
+    expect(summary.hasOngoingSinceCollectionStart).toBe(true);
+    // 35 minutes of watching is NOT the outage's length; it is a lower bound.
+    expect(summary.observedDowntimeMs).toBe(35 * MINUTE_MS);
+  });
+
+  it("does not flag an outage that began while we were watching", () => {
+    const summary = summariseStation(
+      station,
+      [
+        {
+          openedAt: at("2026-07-31T09:20:00Z"),
+          closedAt: null,
+          firstSeenAt: at("2026-07-31T09:20:00Z"),
+          lastSeenAt: now,
+        },
+      ],
+      collectionStart,
+      now,
+    );
+
+    expect(summary.hasOngoingSinceCollectionStart).toBe(false);
+  });
+});

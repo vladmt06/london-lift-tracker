@@ -454,6 +454,14 @@ export type DashboardData = {
   activeOutageCount: number;
   affectedStationCount: number;
   longestActiveOutage: ActiveOutageView | null;
+  /**
+   * Longest active outage we actually timed from its start. Outages already
+   * running when collection began are excluded: we know they are ongoing but
+   * not how long they have lasted, so reporting a duration for them would be
+   * false precision.
+   */
+  longestTimedActiveOutage: ActiveOutageView | null;
+  ongoingSinceCollectionStartCount: number;
   activeOutages: ActiveOutageView[];
   recentlyResolved: ResolvedOutageView[];
   stationsWithHistory: Array<
@@ -485,6 +493,11 @@ export async function getDashboardData(
     activeOutageCount: activeOutages.length,
     affectedStationCount: affectedStationIds.size,
     longestActiveOutage: activeOutages[0] ?? null,
+    longestTimedActiveOutage:
+      activeOutages.find((outage) => !outage.ongoingAtCollectionStart) ?? null,
+    ongoingSinceCollectionStartCount: activeOutages.filter(
+      (outage) => outage.ongoingAtCollectionStart,
+    ).length,
     activeOutages,
     recentlyResolved,
     stationsWithHistory: summaries

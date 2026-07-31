@@ -44,9 +44,15 @@ export function OutageList({
               <p className="mt-0.5 text-sm font-medium text-ink">
                 {item.liftName ?? "Lift not identified in the feed"}
                 <span aria-hidden="true"> · </span>
-                <span className="text-outage">
-                  Disrupted for <Duration ms={item.durationMs} />
-                </span>
+                {item.ongoingAtCollectionStart ? (
+                  // This outage predates collection. We know it is ongoing; we do
+                  // NOT know for how long, so no duration is claimed here.
+                  <span className="text-outage">Ongoing</span>
+                ) : (
+                  <span className="text-outage">
+                    Disrupted for <Duration ms={item.durationMs} />
+                  </span>
+                )}
               </p>
 
               <p className="mt-2 text-sm text-ink">{item.message}</p>
@@ -62,8 +68,12 @@ export function OutageList({
                 </div>
                 {item.ongoingAtCollectionStart ? (
                   <div className="flex gap-1">
-                    <dt className="font-semibold">Note:</dt>
-                    <dd>already disrupted when collection began — it started earlier</dd>
+                    <dt className="font-semibold">How long:</dt>
+                    <dd>
+                      unknown — this lift was already disrupted when collection began, so it has
+                      been out longer than the <Duration ms={item.durationMs} /> we have been
+                      watching it. Check TfL&rsquo;s message above for their own dates.
+                    </dd>
                   </div>
                 ) : null}
               </dl>

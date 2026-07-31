@@ -74,6 +74,7 @@ export default async function StationPage({ params }: { params: Promise<{ slug: 
           message: null,
           firstSeenAtIso: null,
           durationMs: null,
+          ongoingAtCollectionStart: false,
           observedOutageCount: summary.observedOutageCount,
         }
       : null;
@@ -157,8 +158,21 @@ export default async function StationPage({ params }: { params: Promise<{ slug: 
           />
           <MetricCard
             label="Observed downtime"
-            value={<Duration ms={summary.observedDowntimeMs} />}
-            hint="Summed per lift; two lifts down for an hour counts as two hours."
+            value={
+              <>
+                {summary.hasOngoingSinceCollectionStart ? (
+                  <span className="mr-1 text-ink-muted" aria-hidden="true">
+                    ≥
+                  </span>
+                ) : null}
+                <Duration ms={summary.observedDowntimeMs} />
+              </>
+            }
+            hint={
+              summary.hasOngoingSinceCollectionStart
+                ? "A lower bound: summed per lift, and at least one outage here began before collection started."
+                : "Summed per lift; two lifts down for an hour counts as two hours."
+            }
           />
           <MetricCard
             label="Median resolved outage"
@@ -215,7 +229,13 @@ export default async function StationPage({ params }: { params: Promise<{ slug: 
                       <p
                         className={`text-sm font-semibold ${closedAt ? "text-ink-muted" : "text-outage"}`}
                       >
-                        {closedAt ? "Resolved" : "Active"} · <Duration ms={outage.durationMs} />
+                        {closedAt ? "Resolved" : "Active"}
+                        {" · "}
+                        {!closedAt && outage.ongoingAtCollectionStart ? (
+                          <span className="font-normal text-ink-muted">length unknown</span>
+                        ) : (
+                          <Duration ms={outage.durationMs} />
+                        )}
                       </p>
                     </div>
 

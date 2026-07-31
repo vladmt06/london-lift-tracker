@@ -58,6 +58,7 @@ export default async function HomePage() {
       message: outage.message,
       firstSeenAtIso: outage.firstSeenAt.toISOString(),
       durationMs: outage.durationMs,
+      ongoingAtCollectionStart: outage.ongoingAtCollectionStart,
       observedOutageCount: 0,
     });
     placed.add(outage.stationSlug);
@@ -77,6 +78,7 @@ export default async function HomePage() {
       message: null,
       firstSeenAtIso: outage.firstSeenAt.toISOString(),
       durationMs: outage.durationMs,
+      ongoingAtCollectionStart: false,
       observedOutageCount: 0,
     });
     placed.add(outage.stationSlug);
@@ -96,6 +98,7 @@ export default async function HomePage() {
       message: null,
       firstSeenAtIso: null,
       durationMs: null,
+      ongoingAtCollectionStart: false,
       observedOutageCount: station.observedOutageCount,
     });
     placed.add(station.slug);
@@ -167,16 +170,20 @@ export default async function HomePage() {
           <MetricCard
             label="Longest current outage"
             value={
-              data.longestActiveOutage ? (
-                <Duration ms={data.longestActiveOutage.durationMs} />
-              ) : (
+              data.activeOutageCount === 0 ? (
                 <span className="text-ink-muted">none</span>
+              ) : data.longestTimedActiveOutage ? (
+                <Duration ms={data.longestTimedActiveOutage.durationMs} />
+              ) : (
+                <span className="text-base font-semibold text-ink-muted">not yet measurable</span>
               )
             }
             hint={
-              data.longestActiveOutage
-                ? `${data.longestActiveOutage.stationName} — measured from when we first saw it.`
-                : "No lift is currently reported as disrupted."
+              data.activeOutageCount === 0
+                ? "No lift is currently reported as disrupted."
+                : data.longestTimedActiveOutage
+                  ? `${data.longestTimedActiveOutage.stationName} — timed from when we first saw it start.`
+                  : "Every current outage was already running when collection began, so none can be timed yet."
             }
           />
           <MetricCard
@@ -186,6 +193,18 @@ export default async function HomePage() {
           />
         </div>
       </section>
+
+      {data.ongoingSinceCollectionStartCount > 0 ? (
+        <p className="rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
+          <strong className="font-semibold">Why most of these show no duration.</strong>{" "}
+          {data.ongoingSinceCollectionStartCount} of the {data.activeOutageCount} disrupted lifts
+          below were already in TfL&rsquo;s feed when collection began
+          {collectionStartedLabel ? ` on ${collectionStartedLabel}` : ""}. The feed carries no start
+          times, so for those we can only say they are <em>ongoing</em> — some have been out for
+          months, as TfL&rsquo;s own messages show. A duration appears only once we have watched an
+          outage begin.
+        </p>
+      ) : null}
 
       <CurrentDisruptions outages={outages} markers={markers} nowIso={now.toISOString()} />
 

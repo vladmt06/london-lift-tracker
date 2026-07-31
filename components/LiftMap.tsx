@@ -49,7 +49,11 @@ function escapeHtml(value: string): string {
 function describeMarker(marker: MapMarker): string {
   const parts = [KIND_LABEL[marker.kind], `at ${marker.stationName}`];
   if (marker.liftName) parts.push(marker.liftName);
-  if (marker.durationMs !== null) parts.push(`for ${formatDuration(marker.durationMs)}`);
+  if (marker.ongoingAtCollectionStart) {
+    parts.push("ongoing, started before collection began so its length is unknown");
+  } else if (marker.durationMs !== null) {
+    parts.push(`for ${formatDuration(marker.durationMs)}`);
+  }
   if (marker.kind === "historical") {
     parts.push(
       `${marker.observedOutageCount} observed outage${marker.observedOutageCount === 1 ? "" : "s"}`,
@@ -131,7 +135,11 @@ export function LiftMap({ markers, nowIso }: { markers: MapMarker[]; nowIso: str
                   </p>
                 ) : null}
 
-                {marker.durationMs !== null ? (
+                {marker.ongoingAtCollectionStart ? (
+                  <p className="text-ink-muted">
+                    Ongoing. It began before collection started, so its length is unknown.
+                  </p>
+                ) : marker.durationMs !== null ? (
                   <p className="text-ink-muted">
                     {marker.kind === "active" ? "Disrupted for " : "Lasted "}
                     {formatDuration(marker.durationMs)}

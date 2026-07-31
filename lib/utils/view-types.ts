@@ -39,6 +39,8 @@ export type MapMarker = {
   message: string | null;
   firstSeenAtIso: string | null;
   durationMs: number | null;
+  /** True when the outage predates collection, so its duration is unknown. */
+  ongoingAtCollectionStart: boolean;
   observedOutageCount: number;
 };
 
