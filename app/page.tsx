@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { CurrentDisruptions } from "@/components/CurrentDisruptions";
 import { FeedHealth } from "@/components/FeedHealth";
 import { MetricCard } from "@/components/MetricCard";
@@ -7,6 +8,7 @@ import { Duration } from "@/components/Duration";
 import { prisma } from "@/lib/db";
 import { getDashboardData } from "@/lib/metrics/station-metrics";
 import { formatLondonDate } from "@/lib/metrics/duration";
+import { maybeRefreshFeed } from "@/lib/tfl/refresh";
 import type { MapMarker, OutageListItem, StationRow } from "@/lib/utils/view-types";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,10 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const now = new Date();
   const data = await getDashboardData(prisma, now);
+
+  // Top up the data after this response is sent, so the scheduled workflow
+  // being late or dropped cannot leave the site frozen. Nobody waits for it.
+  after(() => maybeRefreshFeed());
 
   const collectionStartedLabel = data.collectionStartedAt
     ? formatLondonDate(data.collectionStartedAt)

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { after } from "next/server";
 import { StationTable } from "@/components/StationTable";
 import { prisma } from "@/lib/db";
 import { formatLondonDate } from "@/lib/metrics/duration";
 import { getCollectionStartedAt, getStationSummaries } from "@/lib/metrics/station-metrics";
+import { maybeRefreshFeed } from "@/lib/tfl/refresh";
 import type { StationRow } from "@/lib/utils/view-types";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,8 @@ export default async function StationsPage() {
     getStationSummaries(prisma, now),
     getCollectionStartedAt(prisma),
   ]);
+
+  after(() => maybeRefreshFeed());
 
   const collectionStartedLabel = collectionStartedAt ? formatLondonDate(collectionStartedAt) : null;
 

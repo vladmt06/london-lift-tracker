@@ -66,7 +66,12 @@ export default async function MethodologyPage() {
             </strong>
             . Nothing before that date is known to this service.
           </li>
-          <li>The feed is polled every five minutes.</li>
+          <li>
+            The feed is polled every five minutes by a scheduled job. Because that scheduler is
+            best-effort and sometimes runs late, loading a page also triggers a poll when the last
+            successful one is more than four minutes old — so the data you are reading is refreshed
+            for the next visitor even if the schedule has slipped.
+          </li>
           <li>
             {health.successfulPollCount.toLocaleString("en-GB")} successful polls have been recorded
             so far.
@@ -168,12 +173,22 @@ export default async function MethodologyPage() {
           Feed failures and stale data
         </h2>
         <p>
-          Polling runs on a scheduled GitHub Actions workflow. Scheduled runs on that platform can
-          be delayed or dropped under load, so the site never assumes it is up to date: the feed
-          status banner shows the actual time of the last successful poll and degrades from{" "}
-          <em>Live</em> (under 10 minutes) to <em>Delayed</em> (10–20 minutes) to <em>Stale</em>{" "}
-          (over 20 minutes). If you see Delayed or Stale, treat &ldquo;current&rdquo; figures as
-          being that old. The collector can also be triggered manually.
+          Polling runs on a scheduled GitHub Actions workflow. Scheduled runs on that platform are
+          best-effort: they are regularly delayed and are sometimes dropped altogether, so the
+          schedule alone cannot be trusted to keep this site current. Page views therefore top the
+          data up as described above, and the collector can also be triggered manually.
+        </p>
+        <p>
+          The site never assumes it is up to date. The feed status banner shows the actual time of
+          the last successful poll and degrades from <em>Live</em> (under 10 minutes) to{" "}
+          <em>Delayed</em> (10–20 minutes) to <em>Stale</em> (over 20 minutes). If you see Delayed
+          or Stale, treat every &ldquo;current&rdquo; figure as being that old.
+        </p>
+        <p>
+          One consequence worth stating plainly: during a quiet period with no visitors and a
+          stalled schedule, no polling happens at all, and a short outage in that window would be
+          missed entirely. Gaps are visible rather than hidden — every poll attempt, including
+          every failure, is recorded.
         </p>
       </section>
 

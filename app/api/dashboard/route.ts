@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { getDashboardData } from "@/lib/metrics/station-metrics";
+import { maybeRefreshFeed } from "@/lib/tfl/refresh";
 
 /**
  * GET /api/dashboard — everything the homepage shows, in one response:
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 export async function GET(): Promise<NextResponse> {
   const now = new Date();
   const data = await getDashboardData(prisma, now);
+
+  after(() => maybeRefreshFeed());
 
   return NextResponse.json({
     generatedAt: now.toISOString(),
