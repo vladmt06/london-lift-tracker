@@ -32,6 +32,6 @@ jobs:
             --show-error \
             --silent \
             --retry 2 \
-            --max-time 30 \
+            --max-time 60 \
             -X POST "${APP_URL}/api/internal/poll-lifts" \
             -H "Authorization: Bearer ${CRON_SECRET}"

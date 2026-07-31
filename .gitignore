@@ -19,3 +19,5 @@ npm-debug.log*
 
 .vercel
 tmp/
+.env*
+!.env.example
