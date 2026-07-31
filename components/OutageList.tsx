@@ -70,9 +70,10 @@ export function OutageList({
                   <div className="flex gap-1">
                     <dt className="font-semibold">How long:</dt>
                     <dd>
-                      unknown — this lift was already disrupted when collection began, so it has
-                      been out longer than the <Duration ms={item.durationMs} /> we have been
-                      watching it. Check TfL&rsquo;s message above for their own dates.
+                      {"unknown — this lift was already disrupted when collection began, so it "}
+                      {"has been out longer than the "}
+                      <Duration ms={item.durationMs} />
+                      {" we have been watching it. Check TfL’s message above for their own dates."}
                     </dd>
                   </div>
                 ) : null}

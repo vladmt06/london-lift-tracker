@@ -197,12 +197,13 @@ export default async function HomePage() {
       {data.ongoingSinceCollectionStartCount > 0 ? (
         <p className="rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
           <strong className="font-semibold">Why most of these show no duration.</strong>{" "}
-          {data.ongoingSinceCollectionStartCount} of the {data.activeOutageCount} disrupted lifts
-          below were already in TfL&rsquo;s feed when collection began
-          {collectionStartedLabel ? ` on ${collectionStartedLabel}` : ""}. The feed carries no start
-          times, so for those we can only say they are <em>ongoing</em> — some have been out for
-          months, as TfL&rsquo;s own messages show. A duration appears only once we have watched an
-          outage begin.
+          {data.ongoingSinceCollectionStartCount} of the {data.activeOutageCount}
+          {" disrupted lifts below were already in TfL’s feed when collection began"}
+          {collectionStartedLabel ? ` on ${collectionStartedLabel}` : ""}
+          {". The feed carries no start times, so for those we can only say they are "}
+          <em>ongoing</em>
+          {" — some have been out for months, as TfL’s own messages show. A duration appears only "}
+          {"once we have watched an outage begin."}
         </p>
       ) : null}
 
