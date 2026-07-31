@@ -1,0 +1,161 @@
+[
+  {
+    "stationUniqueId": "940GZZLUWYP",
+    "disruptedLiftUniqueIds": [
+      "940GZZLUWYP-Lift-5"
+    ],
+    "message": "WEMBLEY PARK STATION: From Monday 10 March until Autumn 2026, no lift service between the street (Wembley Way / car park) and ticket hall. Step-free access is still available by using the entrance/exit on Bridge Road which is level between street and ticket hall. Lifts remain available to all platforms."
+  },
+  {
+    "stationUniqueId": "HUBZCW",
+    "disruptedLiftUniqueIds": [
+      "HUBZCW-Lift-1"
+    ],
+    "message": "Canada Water: No Step Free Access - Step free access is not available between the ticket hall and the Jubilee line and southbound Windrush line platforms due to a faulty lift. Call us on 0343 222 1234 for further information."
+  },
+  {
+    "stationUniqueId": "910GGOSPLOK",
+    "disruptedLiftUniqueIds": [
+      "910GGOSPLOK-Lift-2"
+    ],
+    "message": "Gospel Oak: No Step Free Access - Step free access is not available to the Suffragette line and for eastbound Mildmay line trains due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBLST",
+    "disruptedLiftUniqueIds": [
+      "HUBLST-Lift-1"
+    ],
+    "message": "Liverpool Street: No step free access between the National Rail concourse and the eastbound Circle, Hamm & City and Metropolitan lines due to a faulty lift. Use the Elizabeth line entrance on Broadgate for step free access."
+  },
+  {
+    "stationUniqueId": "HUBEAL",
+    "disruptedLiftUniqueIds": [
+      "HUBEAL-Lift-4",
+      "HUBEAL-Lift-3"
+    ],
+    "message": "Ealing Broadway: Step free access is not available between the footbridge and platform 4 and the Central and District line platforms due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBBAN",
+    "disruptedLiftUniqueIds": [
+      "HUBBAN-Lift-5",
+      "HUBBAN-Lift-4",
+      "HUBBAN-Lift-3",
+      "HUBBAN-Lift-2"
+    ],
+    "message": "Bank: No Step Free Access - Step free access is not available to/from the King William Street entrance due to faulty lifts. For step free access to the DLR and the Northern line, use the entrance on Cannon Street."
+  },
+  {
+    "stationUniqueId": "HUBWIJ",
+    "disruptedLiftUniqueIds": [
+      "HUBWIJ-Lift-1"
+    ],
+    "message": "Willesden Junction: No Step Free Access - Step free access is not available to the Bakerloo line and the Lioness line due to a faulty lift. Call us on 0343 222 1234 if you need more information."
+  },
+  {
+    "stationUniqueId": "910GDENMRKH",
+    "disruptedLiftUniqueIds": [
+      "910GDENMRKH-Lift-2"
+    ],
+    "message": "Denmark Hill: Step free access is not available to the northbound platform due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "910GHACKNYW",
+    "disruptedLiftUniqueIds": [
+      "910GHACKNYW-Lift-1"
+    ],
+    "message": "Hackney Wick: No Step Free Access - The lift to the westbound platform is out of service due to a fault. For step free access, use the ramp on Hepscott Road. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBKGX",
+    "disruptedLiftUniqueIds": [
+      "HUBKGX-Lift-A",
+      "HUBKGX-Lift-B"
+    ],
+    "message": "ST PANCRAS INTERNATIONAL STATION: From Monday 15 June until mid September, there will be no step-free access lift available between the ticket hall and THAMESLINK platforms A & B. Please use London Underground connections via Farringdon for step-free access to THAMESLINK, or EAST MIDLANDS RAILWAY services for Luton Airport Parkway and Bedford."
+  },
+  {
+    "stationUniqueId": "940GZZDLEIN",
+    "disruptedLiftUniqueIds": [
+      "940GZZDLEIN-Lift-3"
+    ],
+    "message": "East India: No Step Free Access - Step free access is not available to/from Nutmeg Lane due to a faulty lift. For step free access, use the entrance on Blackwall Way. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "910GCMDNRD",
+    "disruptedLiftUniqueIds": [
+      "910GCMDNRD-Lift-2"
+    ],
+    "message": "Camden Road: No Step Free Access - Step free access is not available to the eastbound platform due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "910GHAKNYNM",
+    "disruptedLiftUniqueIds": [
+      "910GHAKNYNM-Lift-1"
+    ],
+    "message": "Hackney Downs: No Step Free Access - Step free access is not available between Hackney Central and Hackney Downs (platform 1 towards Liverpool Street) due to a faulty lift. Call us on 0343 222 1234 for further help."
+  },
+  {
+    "stationUniqueId": "HUBHHY",
+    "disruptedLiftUniqueIds": [
+      "HUBHHY-Lift-3"
+    ],
+    "message": "Highbury & Islington: No Step Free Access - Step free access is not available to the Mildmay line platform 8 (trains towards Stratford) due to a faulty lift. Take a train from platform 1 or 2 to Canonbury and change there."
+  },
+  {
+    "stationUniqueId": "910GLANGLEY",
+    "disruptedLiftUniqueIds": [
+      "910GLANGLEY-Lift-2"
+    ],
+    "message": "Langley Station: No Step Free Access - Step free access is not available to the westbound platform (towards Reading) and platform 1 due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "910GCNNB",
+    "disruptedLiftUniqueIds": [
+      "910GCNNB-Lift-1"
+    ],
+    "message": "Canonbury: No Step Free Access - Step free access is not available due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBBRX",
+    "disruptedLiftUniqueIds": [
+      "HUBBRX-Lift-1"
+    ],
+    "message": "Brixton: No Step Free Access - Step free access is not available due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBWEH",
+    "disruptedLiftUniqueIds": [
+      "HUBWEH-Lift-4"
+    ],
+    "message": "West Ham: No Step Free Access - Step free access is not available to the District and Hammersmith & City lines due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBWBP",
+    "disruptedLiftUniqueIds": [
+      "HUBWBP-Lift-4"
+    ],
+    "message": "West Brompton: No Step Free Access - Step free access is not available to the northbound Mildmay line / Southern platform due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "910GROMFORD",
+    "disruptedLiftUniqueIds": [
+      "910GROMFORD-Lift-1 "
+    ],
+    "message": "Romford: No Step Free Access - The lift to platform 5 (trains towards Shenfield) is out of service. Step free access is available via the ramp only. Call us on 0343 222 1234 if you need help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBHRW",
+    "disruptedLiftUniqueIds": [
+      "HUBHRW-Lift-3"
+    ],
+    "message": "Harrow & Wealdstone : No Step Free Access - Step free access is not available to the northbound London Northwestern / Southern (platforms 4 and 5) due to a faulty lift. Call 0343 222 1234 for help planning your journey."
+  },
+  {
+    "stationUniqueId": "HUBWMB",
+    "disruptedLiftUniqueIds": [
+      "HUBWMB-Lift-1"
+    ],
+    "message": "Wembley Central Station: No Step Free Access - Step free access is not available to the northbound Southern / London Northwestern platform due to a faulty lift. Call us on 0343 222 1234 if you need help planning your journey."
+  }
+]

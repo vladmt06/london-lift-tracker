@@ -1,0 +1,16 @@
+{
+  "_comment": [
+    "Manual station metadata, used only when TfL's StopPoint API cannot resolve a",
+    "station id or name from the lift-disruption feed. Keys are matched against",
+    "the station id (case-insensitive) and against the normalised station name",
+    "produced by normalizeStationName() in lib/utils/text.ts.",
+    "Entries here are a last resort before a station is marked UNRESOLVED.",
+    "Keys beginning with an underscore are ignored."
+  ],
+  "_example": {
+    "name": "Example",
+    "naptanId": "940GEXAMPLE",
+    "latitude": 51.5,
+    "longitude": -0.1
+  }
+}

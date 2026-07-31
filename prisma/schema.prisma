@@ -1,0 +1,183 @@
+// London Lift Reliability Tracker — data model.
+//
+// Design notes that are easy to get wrong later:
+//   * Everything is stored in UTC. Only the UI converts to Europe/London.
+//   * `raw*` columns keep the untouched TfL payload so that a future parsing fix
+//     can be replayed over history we already collected.
+//   * An Outage is closed by INFERENCE (it stopped appearing in the feed), never
+//     because TfL told us so. `closureInferred` records that honestly.
+//   * The "one open outage per asset" rule is enforced by a partial unique index
+//     created in migration SQL, because Prisma cannot express `WHERE` on indexes.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PollStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum ResolutionStatus {
+  RESOLVED
+  AMBIGUOUS
+  UNRESOLVED
+}
+
+enum OutageState {
+  OPEN
+  RESOLVED
+}
+
+/// One attempt to read the TfL feed — successful or not. This table is the
+/// feed-health record and the denominator for "how much have we actually seen".
+model PollRun {
+  id                  String     @id @default(cuid())
+  startedAt           DateTime
+  completedAt         DateTime?
+  status              PollStatus
+  httpStatus          Int?
+  itemCount           Int?
+  normalizedItemCount Int?
+  responseHash        String?
+  durationMs          Int?
+  errorMessage        String?
+  createdAt           DateTime   @default(now())
+
+  observations OutageObservation[]
+
+  @@index([startedAt])
+  @@index([status, startedAt])
+}
+
+model Station {
+  id               String           @id @default(cuid())
+  /// TfL `stationUniqueId` from the disruptions feed (NaPTAN or HUB code).
+  tflStationId     String?          @unique
+  naptanId         String?
+  name             String
+  slug             String           @unique
+  latitude         Float?
+  longitude        Float?
+  modes            String[]         @default([])
+  lines            String[]         @default([])
+  resolutionStatus ResolutionStatus @default(UNRESOLVED)
+  /// Where name/coordinates came from: "tfl-stoppoint", "override-file",
+  /// "feed-message", "topology-import".
+  metadataSource   String?
+  rawMetadata      Json?
+  firstSeenAt      DateTime         @default(now())
+  lastSeenAt       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  lifts    Lift[]
+  outages  Outage[]
+  aliases  StationAlias[]
+
+  @@index([name])
+  @@index([resolutionStatus])
+}
+
+model Lift {
+  id                String   @id @default(cuid())
+  stationId         String
+  /// TfL `LiftUniqueId` / `disruptedLiftUniqueIds` entry, e.g. "940GZZLUWYP-Lift-5".
+  tflLiftId         String
+  displayName       String?
+  fromAreas         String[] @default([])
+  intermediateAreas String[] @default([])
+  toAreas           String[] @default([])
+  limitedCapacity   Boolean?
+  notes             String?
+  rawMetadata       Json?
+  firstSeenAt       DateTime @default(now())
+  lastSeenAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  station Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  outages Outage[]
+
+  @@unique([stationId, tflLiftId])
+  @@index([stationId])
+}
+
+/// A continuous period during which one lift was reported disrupted.
+model Outage {
+  id        String      @id @default(cuid())
+  stationId String
+  /// Null when the feed reported a station-level disruption with no lift ids.
+  liftId    String?
+  /// Stable identity across message rewordings. See buildAssetKey() in lib/tfl/normalize.ts.
+  assetKey  String
+  state     OutageState @default(OPEN)
+
+  /// Best available start. The v2 feed carries no timestamps, so in practice
+  /// this is the first poll that saw it — an UPPER BOUND on the real start.
+  openedAt               DateTime
+  firstSeenAt            DateTime
+  lastSeenAt             DateTime
+  /// First successful poll in which this outage was absent.
+  firstMissingAt         DateTime?
+  closedAt               DateTime?
+  /// Consecutive SUCCESSFUL polls that did not contain this outage.
+  missingSuccessfulPolls Int       @default(0)
+
+  sourceEventId   String?
+  firstMessage    String
+  latestMessage   String
+  sourceStartedAt DateTime?
+  /// True when the end time was inferred from the feed rather than reported.
+  closureInferred Boolean   @default(false)
+
+  rawFirst  Json
+  rawLatest Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  station      Station             @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  lift         Lift?               @relation(fields: [liftId], references: [id], onDelete: SetNull)
+  observations OutageObservation[]
+
+  @@index([assetKey])
+  @@index([stationId, openedAt])
+  @@index([state])
+  @@index([closedAt])
+}
+
+/// Append-only log: every time a poll saw this outage, and what it said.
+model OutageObservation {
+  id          String   @id @default(cuid())
+  outageId    String
+  pollRunId   String
+  observedAt  DateTime
+  message     String
+  payloadHash String
+  rawPayload  Json
+
+  outage  Outage  @relation(fields: [outageId], references: [id], onDelete: Cascade)
+  pollRun PollRun @relation(fields: [pollRunId], references: [id], onDelete: Cascade)
+
+  @@unique([outageId, pollRunId, payloadHash])
+  @@index([outageId, observedAt])
+}
+
+/// Alternative spellings/ids that map onto a known station.
+model StationAlias {
+  id        String   @id @default(cuid())
+  alias     String   @unique
+  stationId String
+  createdAt DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@index([stationId])
+}

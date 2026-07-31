@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/*
+ * Restrained public-infrastructure styling: near-white paper, dark ink, strong
+ * type, and no decoration that competes with the data. Status is never carried
+ * by colour alone — every coloured element is paired with a word or a shape.
+ */
+
+@theme {
+  --color-paper: #ffffff;
+  --color-canvas: #f5f6f7;
+  --color-ink: #14171a;
+  --color-ink-muted: #55606b;
+  --color-rule: #d7dce1;
+  --color-rule-strong: #b6bfc8;
+
+  --color-outage: #b4102a;
+  --color-outage-tint: #fdf2f3;
+  --color-restored: #8a5200;
+  --color-restored-tint: #fdf6ec;
+  --color-ok: #10603a;
+  --color-ok-tint: #eef6f1;
+  --color-link: #0b4ea2;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible, high-contrast focus for every interactive element. */
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-link);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Leaflet renders its own focusable markers inside a canvas-like container. */
+.leaflet-container :focus-visible {
+  outline: 3px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screen-reader-only text that still reaches the accessibility tree. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-ink);
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+/* --- Map marker glyphs -------------------------------------------------- */
+/* Shape distinguishes status as well as colour: circle = active disruption,
+   square = restored recently, small hollow dot = historical only. */
+.marker-glyph {
+  display: block;
+  box-sizing: border-box;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1.5px rgba(20, 23, 26, 0.75);
+}
+
+.marker-active {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-outage);
+}
+
+.marker-restored {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--color-restored);
+}
+
+.marker-historical {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--color-ink-muted);
+  box-shadow: none;
+}
+
+.leaflet-container {
+  font: inherit;
+  background: #e8eaec;
+}
