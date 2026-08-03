@@ -158,7 +158,7 @@ export default async function HomePage() {
           now={now}
         />
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard
             label="Lifts disrupted now"
             value={data.activeOutageCount}
@@ -198,29 +198,8 @@ export default async function HomePage() {
                   : "Every current outage was already running when collection began, so none can be timed yet."
             }
           />
-          <MetricCard
-            label="Stations affected ever"
-            value={data.stationsWithHistory.length}
-            hint="Stations with at least one outage observed since collection began — the only ones listed on this site."
-          />
         </div>
       </section>
-
-      {data.ongoingSinceCollectionStartCount > 0 ? (
-        <p className="rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
-          <strong className="font-semibold">Why most of these say “ongoing”.</strong>{" "}
-          {data.ongoingSinceCollectionStartCount} of the {data.activeOutageCount}
-          {" disrupted lifts below were already in TfL’s feed when collection began"}
-          {collectionStartedLabel ? ` on ${collectionStartedLabel}` : ""}
-          {". The feed carries no start times, so for those we can only say they are "}
-          <em>ongoing</em>
-          {"; a duration appears only once we have watched an outage begin."}{" "}
-          <strong className="font-semibold">This is expected, not a fault.</strong>
-          {" Any snapshot of what is broken right now is dominated by slow repairs: a lift fixed "}
-          {"within the hour leaves the feed almost immediately, while one waiting on parts stays "}
-          {"for weeks. TfL’s own messages here quote end dates months away."}
-        </p>
-      ) : null}
 
       <CurrentDisruptions outages={outages} markers={markers} nowIso={now.toISOString()} />
 
