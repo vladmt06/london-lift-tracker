@@ -132,9 +132,9 @@ export default async function HomePage() {
             Lift disruptions across London&rsquo;s rail network
           </h1>
           <p className="mt-1 max-w-3xl text-ink-muted">
-            This service reads Transport for London&rsquo;s public lift-disruption feed every five
-            minutes and keeps a record of what it saw, so that lift outages have a history rather
-            than disappearing once they are fixed.
+            This service repeatedly reads Transport for London&rsquo;s public lift-disruption feed
+            and keeps a record of what it saw, so that lift outages have a history rather than
+            disappearing once they are fixed.
           </p>
           <p className="mt-1 text-sm text-ink-muted">
             {collectionStartedLabel ? (

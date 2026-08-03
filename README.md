@@ -4,7 +4,7 @@ Transport for London publishes which station lifts are broken **right now**, but
 lift is fixed, its entry disappears and the event is gone. So there is no public way to ask "how
 often does this lift fail, and for how long?"
 
-This service polls that feed every five minutes and keeps what it saw. From launch onward, lift
+This service polls that feed repeatedly and keeps what it saw. From launch onward, lift
 outages accumulate a record — visible on a map, in a list, and per station.
 
 **It reports lift outages and observed downtime. It does not claim a station is inaccessible**, and
@@ -25,7 +25,7 @@ collection started, and restoration times are inferred rather than reported.
 | Observed outages since a stated date | Official repair durations |
 | Observed downtime by station | "This station is inaccessible" |
 | Restoration inferred from the feed | Reliability over the past year |
-| Data collected every five minutes | A record of *every* outage — brief faults between polls are missed |
+| The cadence collection actually achieved, published on the site | "Collected every five minutes" — the schedule is throttled, so real gaps are longer |
 
 Station availability percentages are deliberately absent: they would need a verified inventory of
 every lift and an honest observation denominator.
@@ -63,7 +63,7 @@ Tube.
 ## Architecture
 
 ```
-GitHub Actions (cron: every 5 minutes)
+GitHub Actions (cron)  +  any page view with stale data
   └─> POST /api/internal/poll-lifts        Authorization: Bearer CRON_SECRET
         └─> lib/tfl/poll.ts  runPoll()
               1. fetch feed + validate           network, 15s timeout, ≤2 retries
@@ -137,8 +137,8 @@ npm run poll:once                   # collect real data (safe to repeat)
 npm run dev                         # http://localhost:3000
 ```
 
-A `TFL_APP_KEY` is optional: the feed answers anonymously at 50 requests/minute and five-minute
-polling needs about one. Register at <https://api-portal.tfl.gov.uk/> for the 500/minute plan and
+A `TFL_APP_KEY` is optional: the feed answers anonymously at 50 requests/minute and polling needs
+about one. Register at <https://api-portal.tfl.gov.uk/> for the 500/minute plan and
 the client will use the key automatically.
 
 The site shows nothing until at least one poll has run — by design. There are no seeded or mock

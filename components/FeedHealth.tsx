@@ -83,8 +83,8 @@ export function FeedHealth({
       </div>
 
       <p className="mt-1 text-sm text-ink">
-        {copy.explanation} Polling runs every five minutes, and refreshes on page load when the
-        data has gone stale.
+        {copy.explanation} Collection targets every five minutes but is often less frequent — see
+        the methodology for the cadence actually achieved.
         {failedPollsLast24h > 0
           ? ` ${failedPollsLast24h} failed poll${failedPollsLast24h === 1 ? "" : "s"} in the last 24 hours.`
           : ""}

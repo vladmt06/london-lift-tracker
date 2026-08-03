@@ -4,7 +4,8 @@ import { getEnv } from "@/lib/env";
 import { PollLockedError, runPoll } from "@/lib/tfl/poll";
 
 /**
- * The collector endpoint, triggered every five minutes by GitHub Actions.
+ * The collector endpoint, triggered on a schedule by GitHub Actions and on demand
+ * by page views. See lib/tfl/refresh.ts for why both exist.
  *
  *   POST /api/internal/poll-lifts
  *   Authorization: Bearer <CRON_SECRET>
@@ -82,9 +83,26 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 }
 
-export async function GET(): Promise<NextResponse> {
-  return NextResponse.json(
-    { ok: false, error: "Use POST with an Authorization: Bearer <CRON_SECRET> header." },
-    { status: 405, headers: { Allow: "POST" } },
-  );
+/**
+ * Vercel Cron invokes its targets with GET, attaching
+ * `Authorization: Bearer $CRON_SECRET` automatically. Same work, same auth as
+ * POST — an unauthenticated GET still tells the caller to use POST rather than
+ * hinting that a scheduled endpoint exists here.
+ */
+export async function GET(request: Request): Promise<NextResponse> {
+  let secret: string;
+  try {
+    secret = getEnv().CRON_SECRET;
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid configuration" }, { status: 500 });
+  }
+
+  if (!isAuthorised(request, secret)) {
+    return NextResponse.json(
+      { ok: false, error: "Use POST with an Authorization: Bearer <CRON_SECRET> header." },
+      { status: 405, headers: { Allow: "POST" } },
+    );
+  }
+
+  return POST(request);
 }

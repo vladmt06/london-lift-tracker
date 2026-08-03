@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatLondonDate, formatLondonDateTime } from "@/lib/metrics/duration";
-import { getFeedHealth } from "@/lib/metrics/station-metrics";
+import { getCollectionCadence, getFeedHealth } from "@/lib/metrics/station-metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,10 @@ export const metadata: Metadata = {
 
 export default async function MethodologyPage() {
   const now = new Date();
-  const health = await getFeedHealth(prisma, now);
+  const [health, cadence] = await Promise.all([
+    getFeedHealth(prisma, now),
+    getCollectionCadence(prisma, now),
+  ]);
 
   const collectionStartedLabel = health.collectionStartedAt
     ? formatLondonDate(health.collectionStartedAt)
@@ -67,10 +70,34 @@ export default async function MethodologyPage() {
             . Nothing before that date is known to this service.
           </li>
           <li>
-            The feed is polled every five minutes by a scheduled job. Because that scheduler is
-            best-effort and sometimes runs late, loading a page also triggers a poll when the last
-            successful one is more than four minutes old — so the data you are reading is refreshed
-            for the next visitor even if the schedule has slipped.
+            Collection <em>targets</em> one poll every five minutes, from a scheduled job, plus a
+            poll whenever someone loads a page and the last successful one is over four minutes
+            old.
+          </li>
+          <li>
+            {"In practice it is less frequent than that, and the real figure is published here "}
+            {"rather than the target. Over the last 24 hours there "}
+            {cadence.pollsLast24h === 1 ? "was " : "were "}
+            <strong className="font-semibold">{cadence.pollsLast24h}</strong>
+            {cadence.pollsLast24h === 1 ? " successful poll" : " successful polls"}
+            {cadence.medianGapMinutes !== null ? (
+              <>
+                {", a typical gap of "}
+                <strong className="font-semibold">{cadence.medianGapMinutes} minutes</strong>
+                {cadence.worstGapMinutes !== null ? (
+                  <>
+                    {" between them, and a longest gap of "}
+                    <strong className="font-semibold">{cadence.worstGapMinutes} minutes</strong>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+            {". Any lift that failed and was fixed inside one of those gaps was never seen, and "}
+            {"restoration times are only ever as precise as the gap they fall in."}
+          </li>
+          <li>
+            The gaps exist because the free scheduler this runs on throttles frequent jobs; it is a
+            limitation of the collector, not of TfL&rsquo;s feed.
           </li>
           <li>
             {health.successfulPollCount.toLocaleString("en-GB")} successful polls have been recorded

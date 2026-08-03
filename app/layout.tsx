@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
   description:
     "Current lift disruptions reported by TfL at London rail and Underground stations, " +
-    "with observed outage history collected every five minutes.",
+    "with observed outage history collected since launch.",
   openGraph: {
     title: "London Lift Reliability Tracker",
     description:

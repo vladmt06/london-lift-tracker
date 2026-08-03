@@ -336,7 +336,7 @@ export function StationTable({
                         Printing that timestamp made it look as though the whole
                         network failed at once, so say what it means instead. */}
                     {row.activeOutages > 0 ? (
-                      <span className="font-medium text-outage">
+                      <span className="whitespace-nowrap font-medium text-outage">
                         <span aria-hidden="true">● </span>Disrupted now
                       </span>
                     ) : row.lastObservedDisruptionAtIso ? (

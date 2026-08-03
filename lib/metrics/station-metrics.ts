@@ -103,6 +103,52 @@ export async function getCollectionStartedAt(prisma: Db = defaultPrisma): Promis
   return first?.startedAt ?? null;
 }
 
+export type CollectionCadence = {
+  pollsLast24h: number;
+  medianGapMinutes: number | null;
+  worstGapMinutes: number | null;
+};
+
+/**
+ * How often collection ACTUALLY happens, measured rather than assumed.
+ *
+ * The schedule asks for every five minutes, but GitHub's cron is best-effort
+ * and throttles high-frequency workflows heavily. Publishing the observed
+ * cadence keeps the site honest about the resolution of its own data: gaps of
+ * an hour mean short outages inside them were never seen.
+ */
+export async function getCollectionCadence(
+  prisma: Db = defaultPrisma,
+  now: Date = new Date(),
+): Promise<CollectionCadence> {
+  const since = new Date(now.getTime() - DAY_MS);
+
+  const runs = await prisma.pollRun.findMany({
+    where: { status: PollStatus.SUCCESS, startedAt: { gte: since } },
+    orderBy: { startedAt: "asc" },
+    select: { startedAt: true },
+  });
+
+  if (runs.length < 2) {
+    return { pollsLast24h: runs.length, medianGapMinutes: null, worstGapMinutes: null };
+  }
+
+  const gaps: number[] = [];
+  for (let index = 1; index < runs.length; index += 1) {
+    const previous = runs[index - 1] as { startedAt: Date };
+    const current = runs[index] as { startedAt: Date };
+    gaps.push((current.startedAt.getTime() - previous.startedAt.getTime()) / MINUTE_MS);
+  }
+
+  const medianGap = median(gaps);
+
+  return {
+    pollsLast24h: runs.length,
+    medianGapMinutes: medianGap === null ? null : Math.round(medianGap),
+    worstGapMinutes: Math.round(Math.max(...gaps)),
+  };
+}
+
 export function classifyFeedHealth(
   lastSuccessfulPollAt: Date | null,
   now: Date = new Date(),
