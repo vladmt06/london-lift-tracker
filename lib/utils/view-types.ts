@@ -57,4 +57,6 @@ export type StationRow = {
   medianResolvedMs: number | null;
   longestResolvedMs: number | null;
   lastObservedDisruptionAtIso: string | null;
+  /** At least one outage here began before collection: downtime is a floor. */
+  hasOngoingSinceCollectionStart: boolean;
 };

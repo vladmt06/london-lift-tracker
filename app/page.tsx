@@ -117,6 +117,7 @@ export default async function HomePage() {
     medianResolvedMs: station.medianResolvedMs,
     longestResolvedMs: station.longestResolvedMs,
     lastObservedDisruptionAtIso: station.lastObservedDisruptionAt?.toISOString() ?? null,
+    hasOngoingSinceCollectionStart: station.hasOngoingSinceCollectionStart,
   }));
 
   const unmappableOutages = outages.filter(
@@ -165,7 +166,7 @@ export default async function HomePage() {
           <MetricCard
             label="Stations affected now"
             value={data.affectedStationCount}
-            hint="A disrupted lift does not necessarily mean the station is inaccessible."
+            hint="Out of hundreds across London. A disrupted lift does not necessarily mean the station is inaccessible."
           />
           <MetricCard
             label="Longest current outage"
@@ -187,9 +188,9 @@ export default async function HomePage() {
             }
           />
           <MetricCard
-            label="Stations observed"
+            label="Stations affected ever"
             value={data.stationsWithHistory.length}
-            hint="Stations with at least one outage observed since collection began."
+            hint="Stations with at least one outage observed since collection began — the only ones listed on this site."
           />
         </div>
       </section>

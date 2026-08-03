@@ -34,7 +34,7 @@ const COLUMNS: Array<{ key: SortKey; label: string; numeric: boolean; help?: str
   { key: "observedDowntimeMs", label: "Observed downtime", numeric: true },
   { key: "medianResolvedMs", label: "Median resolved", numeric: true },
   { key: "longestResolvedMs", label: "Longest resolved", numeric: true },
-  { key: "lastObserved", label: "Last disruption", numeric: false },
+  { key: "lastObserved", label: "Status", numeric: false },
 ];
 
 function compareNullableDesc(a: number | null, b: number | null): number {
@@ -222,7 +222,10 @@ export function StationTable({
       ) : null}
 
       <p aria-live="polite" className="text-sm text-ink-muted">
-        Showing {sorted.length} of {rows.length} station{rows.length === 1 ? "" : "s"}.
+        {`Showing ${sorted.length} of ${rows.length} `}
+        {rows.length === 1 ? "station" : "stations"}
+        {" that have had a lift disruption since collection began. Stations with none reported "}
+        {"do not appear at all."}
       </p>
 
       {/* `relative` matters: the visually-hidden sort hints are absolutely
@@ -235,7 +238,9 @@ export function StationTable({
             {collectionStartedLabel
               ? `Ranked by observed downtime since ${collectionStartedLabel}.`
               : "Ranked by observed downtime. Collection has not started yet."}{" "}
-            Downtime sums each lift separately, so two lifts out for an hour counts as two hours.
+            {"Downtime sums each lift separately, so two lifts out for an hour counts as two "}
+            {"hours. A ≥ sign means the outage began before collection started, so the real "}
+            {"figure is higher."}
           </caption>
 
           <thead>
@@ -305,6 +310,15 @@ export function StationTable({
                   <td className="px-3 py-2 text-right tabular-nums">{row.observedOutageCount}</td>
 
                   <td className="px-3 py-2 text-right tabular-nums">
+                    {/* A floor, not a measurement, when an outage predates collection. */}
+                    {row.hasOngoingSinceCollectionStart ? (
+                      <>
+                        <span aria-hidden="true" className="mr-0.5 text-ink-muted">
+                          ≥
+                        </span>
+                        <span className="sr-only">at least </span>
+                      </>
+                    ) : null}
                     <Duration ms={row.observedDowntimeMs} />
                   </td>
 
@@ -317,10 +331,21 @@ export function StationTable({
                   </td>
 
                   <td className="px-3 py-2">
-                    {row.lastObservedDisruptionAtIso ? (
-                      <time dateTime={row.lastObservedDisruptionAtIso}>
-                        {formatLondonDateTime(new Date(row.lastObservedDisruptionAtIso))}
-                      </time>
+                    {/* For an active outage the newest sighting is simply the last
+                        poll, which is the same instant for every affected station.
+                        Printing that timestamp made it look as though the whole
+                        network failed at once, so say what it means instead. */}
+                    {row.activeOutages > 0 ? (
+                      <span className="font-medium text-outage">
+                        <span aria-hidden="true">● </span>Disrupted now
+                      </span>
+                    ) : row.lastObservedDisruptionAtIso ? (
+                      <span className="text-ink-muted">
+                        Clear since{" "}
+                        <time dateTime={row.lastObservedDisruptionAtIso}>
+                          {formatLondonDateTime(new Date(row.lastObservedDisruptionAtIso))}
+                        </time>
+                      </span>
                     ) : (
                       <span className="text-ink-muted">none observed</span>
                     )}

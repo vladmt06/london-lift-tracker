@@ -41,7 +41,10 @@ export default async function StationsPage() {
     medianResolvedMs: station.medianResolvedMs,
     longestResolvedMs: station.longestResolvedMs,
     lastObservedDisruptionAtIso: station.lastObservedDisruptionAt?.toISOString() ?? null,
+    hasOngoingSinceCollectionStart: station.hasOngoingSinceCollectionStart,
   }));
+
+  const activeStationCount = summaries.filter((station) => station.activeOutages > 0).length;
 
   const resolvedOutageTotal = summaries.reduce(
     (total, station) => total + (station.observedOutageCount - station.activeOutages),
@@ -51,17 +54,38 @@ export default async function StationsPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Stations</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Stations with observed lift disruptions
+        </h1>
         <p className="max-w-3xl text-ink-muted">
           {collectionStartedLabel ? (
             <>
-              Ranked by observed downtime since{" "}
-              <strong className="font-semibold text-ink">{collectionStartedLabel}</strong>. These
-              figures describe what this service saw in that window — not a station&rsquo;s full
-              history, and not its overall accessibility.
+              {"Ranked by observed downtime since "}
+              <strong className="font-semibold text-ink">{collectionStartedLabel}</strong>
+              {". These figures describe what this service saw in that window — not a station’s "}
+              {"full history, and not its overall accessibility."}
             </>
           ) : (
             <>No successful poll has been recorded yet, so there is nothing to rank.</>
+          )}
+        </p>
+        <p className="max-w-3xl rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
+          <strong className="font-semibold">This is not a list of London stations.</strong>
+          {" A station appears here only once TfL has reported a lift disruption at it. "}
+          {activeStationCount > 0 ? (
+            <>
+              {"Right now "}
+              <strong className="font-semibold">{activeStationCount}</strong>
+              {` of these ${rows.length} stations `}
+              {activeStationCount === 1 ? "has" : "have"}
+              {" a lift disruption; the rest are listed because of an earlier one. The hundreds "}
+              {"of London stations with no reported disruption are absent entirely."}
+            </>
+          ) : (
+            <>
+              {"None of them has a disruption right now — they are listed because of earlier "}
+              {"ones. Stations with no reported disruption are absent entirely."}
+            </>
           )}
         </p>
         {resolvedOutageTotal === 0 ? (
