@@ -36,6 +36,8 @@ export default async function HomePage() {
     lastSeenAtIso: outage.lastSeenAt.toISOString(),
     durationMs: outage.durationMs,
     ongoingAtCollectionStart: outage.ongoingAtCollectionStart,
+    statedDurationMs: outage.statedDurationMs,
+    statedStartAtIso: outage.statedStartAt?.toISOString() ?? null,
     latitude: outage.latitude,
     longitude: outage.longitude,
   }));
@@ -174,7 +176,12 @@ export default async function HomePage() {
               data.activeOutageCount === 0 ? (
                 <span className="text-ink-muted">none</span>
               ) : data.longestTimedActiveOutage ? (
-                <Duration ms={data.longestTimedActiveOutage.durationMs} />
+                <Duration
+                  ms={
+                    data.longestTimedActiveOutage.statedDurationMs ??
+                    data.longestTimedActiveOutage.durationMs
+                  }
+                />
               ) : (
                 <span className="text-base font-semibold text-ink-muted">not yet measurable</span>
               )
@@ -183,7 +190,11 @@ export default async function HomePage() {
               data.activeOutageCount === 0
                 ? "No lift is currently reported as disrupted."
                 : data.longestTimedActiveOutage
-                  ? `${data.longestTimedActiveOutage.stationName} — timed from when we first saw it start.`
+                  ? `${data.longestTimedActiveOutage.stationName} — ${
+                      data.longestTimedActiveOutage.statedDurationMs !== null
+                        ? "measured from the start date in TfL’s own message."
+                        : "timed from when we first saw it start."
+                    }`
                   : "Every current outage was already running when collection began, so none can be timed yet."
             }
           />

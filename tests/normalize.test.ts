@@ -6,6 +6,7 @@ import {
   liftNameFromId,
   normalizeFeed,
   normalizeRecord,
+  parseStatedStartDate,
   parseTflDate,
   stationNameFromMessage,
   titleCaseStationName,
@@ -334,5 +335,43 @@ describe("the captured real feed", () => {
       expect(item.stationName.length).toBeGreaterThan(0);
       expect(item.stationSourceId).toBeTruthy();
     }
+  });
+});
+
+describe("start dates stated in TfL's own message", () => {
+  const reference = new Date("2026-08-03T12:00:00Z");
+
+  it("reads the date out of a 'From <weekday> <day> <month>' phrase", () => {
+    const start = parseStatedStartDate(
+      "WEMBLEY PARK STATION: From Monday 10 March until Autumn 2026, no lift service.",
+      reference,
+    );
+
+    expect(start?.toISOString()).toBe("2026-03-10T00:00:00.000Z");
+  });
+
+  it("assumes last year when the date has not happened yet this year", () => {
+    // "From Monday 15 December" read in August must mean last December.
+    const start = parseStatedStartDate("From Monday 15 December, no lift service.", reference);
+
+    expect(start?.getUTCFullYear()).toBe(2025);
+    expect(start?.getUTCMonth()).toBe(11);
+  });
+
+  it("ignores messages that state no start date", () => {
+    expect(
+      parseStatedStartDate(
+        "Canada Water: No Step Free Access - lift out of service due to a fault.",
+        reference,
+      ),
+    ).toBeNull();
+  });
+
+  it("does not mistake an end date for a start date", () => {
+    expect(parseStatedStartDate("No lift service until Monday 10 March.", reference)).toBeNull();
+  });
+
+  it("rejects a date that does not exist", () => {
+    expect(parseStatedStartDate("From Monday 31 February, no lift service.", reference)).toBeNull();
   });
 });

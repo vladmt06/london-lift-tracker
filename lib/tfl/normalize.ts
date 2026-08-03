@@ -63,6 +63,50 @@ export function parseTflDate(value: unknown): Date | null {
   return parsed;
 }
 
+const MONTH_INDEX: Record<string, number> = {
+  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+};
+
+/**
+ * Pull a start date out of TfL's own wording, e.g.
+ * "From Monday 10 March until Autumn 2026" -> 10 March.
+ *
+ * This is TfL's claim about when the fault began, not our measurement, and it
+ * is the only start information the API ever gives us — the structured feed has
+ * no timestamps at all. Deliberately conservative: it matches only an explicit
+ * "from <day> <month>" phrase, and rejects anything that lands in the future.
+ *
+ * The year is inferred, because TfL usually omits it: assume the most recent
+ * occurrence of that day and month at or before the reference date.
+ */
+export function parseStatedStartDate(message: string, reference: Date = new Date()): Date | null {
+  const match = message.match(
+    new RegExp(
+      String.raw`\bfrom\s+(?:mon|tues|wednes|thurs|fri|satur|sun)day\s+(\d{1,2})(?:st|nd|rd|th)?\s+(${Object.keys(MONTH_INDEX).join("|")})\b`,
+      "i",
+    ),
+  );
+
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = MONTH_INDEX[(match[2] as string).toLowerCase()];
+  if (month === undefined || !Number.isInteger(day) || day < 1 || day > 31) return null;
+
+  let candidate = new Date(Date.UTC(reference.getUTCFullYear(), month, day));
+
+  // TfL rarely writes the year; a date ahead of now must belong to last year.
+  if (candidate.getTime() > reference.getTime()) {
+    candidate = new Date(Date.UTC(reference.getUTCFullYear() - 1, month, day));
+  }
+
+  // Guard against a nonsense parse such as "31 February" rolling over.
+  if (candidate.getUTCDate() !== day || candidate.getUTCMonth() !== month) return null;
+
+  return candidate;
+}
+
 /**
  * Derive a human station name from the message, which conventionally begins
  * "STATION NAME: ..." or "Station Name - ...". This is only a fallback label:

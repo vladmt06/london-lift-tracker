@@ -17,6 +17,9 @@ export type OutageListItem = {
   durationMs: number;
   /** Already disrupted when we started collecting: true start time unknown. */
   ongoingAtCollectionStart: boolean;
+  /** Duration from the start date TfL states in its own message, if it gives one. */
+  statedDurationMs: number | null;
+  statedStartAtIso: string | null;
   latitude: number | null;
   longitude: number | null;
 };

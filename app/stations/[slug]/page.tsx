@@ -57,6 +57,8 @@ export default async function StationPage({ params }: { params: Promise<{ slug: 
     lastSeenAtIso: outage.lastSeenAt.toISOString(),
     durationMs: outage.durationMs,
     ongoingAtCollectionStart: outage.ongoingAtCollectionStart,
+    statedDurationMs: outage.statedDurationMs,
+    statedStartAtIso: outage.statedStartAt?.toISOString() ?? null,
     latitude: outage.latitude,
     longitude: outage.longitude,
   }));

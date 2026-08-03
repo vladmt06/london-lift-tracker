@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { Duration } from "@/components/Duration";
-import { formatLondonDateTime, londonTimeZoneAbbreviation } from "@/lib/metrics/duration";
+import {
+  formatLondonDate,
+  formatLondonDateTime,
+  londonTimeZoneAbbreviation,
+} from "@/lib/metrics/duration";
 import type { OutageListItem } from "@/lib/utils/view-types";
 
 /**
@@ -41,18 +45,26 @@ export function OutageList({
                 </Link>
               </h3>
 
+              {/* Always give a length. Best available, in order: the start TfL
+                  states in its own message; our measurement when we watched it
+                  begin; otherwise how long we have seen it, marked as a floor. */}
               <p className="mt-0.5 text-sm font-medium text-ink">
                 {item.liftName ?? "Lift not identified in the feed"}
                 <span aria-hidden="true"> · </span>
-                {item.ongoingAtCollectionStart ? (
-                  // This outage predates collection. We know it is ongoing; we do
-                  // NOT know for how long, so no duration is claimed here.
-                  <span className="text-outage">Ongoing</span>
-                ) : (
-                  <span className="text-outage">
-                    Disrupted for <Duration ms={item.durationMs} />
-                  </span>
-                )}
+                <span className="text-outage">
+                  {"Disrupted for "}
+                  {item.statedDurationMs !== null ? (
+                    <Duration ms={item.statedDurationMs} />
+                  ) : item.ongoingAtCollectionStart ? (
+                    <>
+                      <span aria-hidden="true">≥ </span>
+                      <span className="sr-only">at least </span>
+                      <Duration ms={item.durationMs} />
+                    </>
+                  ) : (
+                    <Duration ms={item.durationMs} />
+                  )}
+                </span>
               </p>
 
               <p className="mt-2 text-sm text-ink">{item.message}</p>
@@ -61,18 +73,27 @@ export function OutageList({
                   outage has no duration belongs once, above the list — not
                   repeated on all thirty cards, where it buried the message. */}
               <p className="mt-2 text-xs text-ink-muted">
-                {item.ongoingAtCollectionStart ? (
+                {item.statedDurationMs !== null && item.statedStartAtIso ? (
                   <>
-                    {"Watched for "}
-                    <Duration ms={item.durationMs} />
-                    {" so far; it began before we started, so its true length is unknown."}
+                    {"Out since "}
+                    <time dateTime={item.statedStartAtIso}>
+                      {formatLondonDate(new Date(item.statedStartAtIso))}
+                    </time>
+                    {", the start date given in TfL’s message."}
+                  </>
+                ) : item.ongoingAtCollectionStart ? (
+                  <>
+                    {"At least that long: it was already broken when we started watching on "}
+                    <time dateTime={item.firstSeenAtIso}>{formatLondonDate(firstSeen)}</time>
+                    {", so it began earlier."}
                   </>
                 ) : (
                   <>
-                    {"First observed "}
+                    {"Timed from when we first saw it, "}
                     <time dateTime={item.firstSeenAtIso}>
                       {formatLondonDateTime(firstSeen)} {londonTimeZoneAbbreviation(firstSeen)}
                     </time>
+                    {"."}
                   </>
                 )}
               </p>

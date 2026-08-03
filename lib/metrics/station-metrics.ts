@@ -1,6 +1,7 @@
 import { PollStatus, ResolutionStatus, type Prisma } from "@prisma/client";
 import { prisma as defaultPrisma } from "@/lib/db";
 import type { PrismaClient } from "@prisma/client";
+import { parseStatedStartDate } from "@/lib/tfl/normalize";
 import {
   DAY_MS,
   MINUTE_MS,
@@ -53,6 +54,10 @@ export type ActiveOutageView = {
   durationMs: number;
   /** True when the outage was already running at our very first poll. */
   ongoingAtCollectionStart: boolean;
+  /** Start date TfL states in its own message, when it gives one. */
+  statedStartAt: Date | null;
+  /** Duration from TfL's stated start; null when they state none. */
+  statedDurationMs: number | null;
 };
 
 export type ResolvedOutageView = ActiveOutageView & {
@@ -209,7 +214,17 @@ function toOutageView(
   collectionStartedAt: Date | null,
   now: Date,
 ): ActiveOutageView {
+  // TfL sometimes says in prose when a fault began. That is better than our
+  // "first observed", which for a pre-existing outage is merely when we arrived.
+  const statedStartAt = parseStatedStartDate(outage.latestMessage, now);
+  const end = outage.closedAt ?? now;
+
   return {
+    statedStartAt,
+    statedDurationMs:
+      statedStartAt && statedStartAt.getTime() < end.getTime()
+        ? end.getTime() - statedStartAt.getTime()
+        : null,
     id: outage.id,
     stationId: outage.stationId,
     stationName: outage.station.name,
@@ -241,9 +256,34 @@ export async function getActiveOutages(
     orderBy: { openedAt: "asc" },
   });
 
+  // Alphabetical by station: a reader scanning for one station should be able
+  // to find it, which matters more here than ranking by severity.
   return outages
     .map((outage) => toOutageView(outage, collectionStartedAt, now))
-    .sort((a, b) => b.durationMs - a.durationMs);
+    .sort(
+      (a, b) =>
+        a.stationName.localeCompare(b.stationName, "en-GB") ||
+        (a.liftName ?? "").localeCompare(b.liftName ?? "", "en-GB"),
+    );
+}
+
+/** Longest by the best duration we have for each outage. */
+function longestBy(
+  outages: ActiveOutageView[],
+  durationOf: (outage: ActiveOutageView) => number | null,
+): ActiveOutageView | null {
+  let best: ActiveOutageView | null = null;
+  let bestMs = -1;
+
+  for (const outage of outages) {
+    const ms = durationOf(outage);
+    if (ms !== null && ms > bestMs) {
+      best = outage;
+      bestMs = ms;
+    }
+  }
+
+  return best;
 }
 
 export async function getRecentlyResolvedOutages(
@@ -538,9 +578,13 @@ export async function getDashboardData(
     collectionStartedAt: feedHealth.collectionStartedAt,
     activeOutageCount: activeOutages.length,
     affectedStationCount: affectedStationIds.size,
-    longestActiveOutage: activeOutages[0] ?? null,
-    longestTimedActiveOutage:
-      activeOutages.find((outage) => !outage.ongoingAtCollectionStart) ?? null,
+    // The list is alphabetical now, so "longest" is computed rather than taken
+    // from the front.
+    longestActiveOutage: longestBy(activeOutages, (outage) => outage.durationMs),
+    longestTimedActiveOutage: longestBy(activeOutages, (outage) =>
+      // An outage TfL dated is timed even if it predates collection.
+      outage.statedDurationMs ?? (outage.ongoingAtCollectionStart ? null : outage.durationMs),
+    ),
     ongoingSinceCollectionStartCount: activeOutages.filter(
       (outage) => outage.ongoingAtCollectionStart,
     ).length,
