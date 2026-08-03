@@ -157,6 +157,18 @@ export default async function MethodologyPage() {
           collection began are labelled as such: their true duration is longer than shown.
         </p>
 
+        <h3 className="font-bold">Why the current list looks so long-running</h3>
+        <p>
+          The list of what is broken <em>right now</em> is inherently weighted towards slow
+          repairs, and this trips people up. A lift restored within an hour is in the feed briefly
+          and then gone; one waiting on a part sits there for weeks. So at any moment the
+          disruptions on display are mostly the stubborn ones, and a station that has had five
+          quick faults can look better than one with a single long fault. TfL&rsquo;s messages
+          often say so themselves — current entries quote end dates months ahead. This is a
+          property of snapshots, not an error, and it is why the per-station history matters more
+          than the live count.
+        </p>
+
         <h3 className="font-bold">Short outages can be missed entirely</h3>
         <p>
           A fault that appears and clears between two polls leaves no trace here. This service

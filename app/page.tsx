@@ -197,14 +197,17 @@ export default async function HomePage() {
 
       {data.ongoingSinceCollectionStartCount > 0 ? (
         <p className="rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
-          <strong className="font-semibold">Why most of these show no duration.</strong>{" "}
+          <strong className="font-semibold">Why most of these say “ongoing”.</strong>{" "}
           {data.ongoingSinceCollectionStartCount} of the {data.activeOutageCount}
           {" disrupted lifts below were already in TfL’s feed when collection began"}
           {collectionStartedLabel ? ` on ${collectionStartedLabel}` : ""}
           {". The feed carries no start times, so for those we can only say they are "}
           <em>ongoing</em>
-          {" — some have been out for months, as TfL’s own messages show. A duration appears only "}
-          {"once we have watched an outage begin."}
+          {"; a duration appears only once we have watched an outage begin."}{" "}
+          <strong className="font-semibold">This is expected, not a fault.</strong>
+          {" Any snapshot of what is broken right now is dominated by slow repairs: a lift fixed "}
+          {"within the hour leaves the feed almost immediately, while one waiting on parts stays "}
+          {"for weeks. TfL’s own messages here quote end dates months away."}
         </p>
       ) : null}
 
