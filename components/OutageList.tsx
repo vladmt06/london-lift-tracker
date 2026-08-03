@@ -57,27 +57,25 @@ export function OutageList({
 
               <p className="mt-2 text-sm text-ink">{item.message}</p>
 
-              <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                <div className="flex gap-1">
-                  <dt className="font-semibold">First observed:</dt>
-                  <dd>
+              {/* One compact line. The full explanation of why a pre-existing
+                  outage has no duration belongs once, above the list — not
+                  repeated on all thirty cards, where it buried the message. */}
+              <p className="mt-2 text-xs text-ink-muted">
+                {item.ongoingAtCollectionStart ? (
+                  <>
+                    {"Watched for "}
+                    <Duration ms={item.durationMs} />
+                    {" so far; it began before we started, so its true length is unknown."}
+                  </>
+                ) : (
+                  <>
+                    {"First observed "}
                     <time dateTime={item.firstSeenAtIso}>
                       {formatLondonDateTime(firstSeen)} {londonTimeZoneAbbreviation(firstSeen)}
                     </time>
-                  </dd>
-                </div>
-                {item.ongoingAtCollectionStart ? (
-                  <div className="flex gap-1">
-                    <dt className="font-semibold">How long:</dt>
-                    <dd>
-                      {"unknown — this lift was already disrupted when collection began, so it "}
-                      {"has been out longer than the "}
-                      <Duration ms={item.durationMs} />
-                      {" we have been watching it. Check TfL’s message above for their own dates."}
-                    </dd>
-                  </div>
-                ) : null}
-              </dl>
+                  </>
+                )}
+              </p>
             </article>
           </li>
         );
