@@ -23,25 +23,47 @@ import { prisma } from "@/lib/db";
 import { parseCsv, parseCsvBoolean, readColumn, splitList } from "@/lib/utils/csv";
 import { slugify } from "@/lib/utils/text";
 
-type Args = { file: string; createStations: boolean };
+/** TfL publishes the step-free topology openly, with no key required. */
+const TFL_TOPOLOGY_URL = "https://api.tfl.gov.uk/stationdata/tfl-stationdata-detailed.zip";
+
+type Args = { file: string | null; url: string | null; createStations: boolean };
 
 function parseArgs(argv: string[]): Args {
-  let file = "";
+  let file: string | null = null;
+  let url: string | null = null;
   let createStations = false;
 
   for (const arg of argv) {
-    if (arg.startsWith("--file=")) file = arg.slice("--file=".length);
+    if (arg.startsWith("--file=")) file = resolve(arg.slice("--file=".length));
+    else if (arg.startsWith("--url=")) url = arg.slice("--url=".length);
+    else if (arg === "--download") url = TFL_TOPOLOGY_URL;
     else if (arg === "--create-stations") createStations = true;
   }
 
-  if (!file) {
+  if (!file && !url) {
     throw new Error(
-      "Missing --file. Usage:\n" +
-        "  npm run import:topology -- --file=/absolute/path/to/topology.zip [--create-stations]",
+      "Provide a source. Usage:\n" +
+        "  npm run import:topology -- --download [--create-stations]\n" +
+        "  npm run import:topology -- --file=/absolute/path/to/topology.zip\n" +
+        `  (--download fetches ${TFL_TOPOLOGY_URL})`,
     );
   }
 
-  return { file: resolve(file), createStations };
+  return { file, url, createStations };
+}
+
+/** Fetch the archive to a temporary path so the rest of the flow is identical. */
+async function downloadArchive(url: string, destination: string): Promise<string> {
+  console.info(`Downloading ${url}`);
+  const response = await fetch(url, { headers: { Accept: "application/zip" } });
+
+  if (!response.ok) {
+    throw new Error(`Download failed: HTTP ${response.status} from ${url}`);
+  }
+
+  const target = join(destination, "topology.zip");
+  await writeFile(target, Buffer.from(await response.arrayBuffer()));
+  return target;
 }
 
 /** Extract the archive, refusing entries that would escape the target directory. */
@@ -85,9 +107,11 @@ async function main(): Promise<void> {
   const workDirectory = await mkdtemp(join(tmpdir(), "lift-topology-"));
 
   try {
-    console.info(`Extracting ${args.file}`);
+    const archivePath = args.file ?? (await downloadArchive(args.url as string, workDirectory));
+
+    console.info(`Extracting ${archivePath}`);
     console.info(`  into ${workDirectory}`);
-    await extractZip(args.file, workDirectory);
+    await extractZip(archivePath, workDirectory);
 
     const files = await listFilesRecursively(workDirectory);
     const csvFiles = files.filter((file) => file.toLowerCase().endsWith(".csv"));
