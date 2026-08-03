@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { OutageList } from "@/components/OutageList";
+import { StationLookupResult, type StationLookup } from "@/components/StationLookupResult";
 import type { MapMarker, OutageListItem } from "@/lib/utils/view-types";
 
 /**
@@ -33,6 +34,7 @@ export function CurrentDisruptions({
   nowIso: string;
 }) {
   const [query, setQuery] = useState("");
+  const [lookup, setLookup] = useState<{ query: string; data: StationLookup } | null>(null);
   const searchId = useId();
 
   const normalisedQuery = query.trim().toLowerCase();
@@ -55,6 +57,37 @@ export function CurrentDisruptions({
         marker.stationName.toLowerCase().includes(normalisedQuery),
     );
   }, [markers, filteredOutages, normalisedQuery]);
+
+  const trimmedQuery = query.trim();
+  const searchingForStation = normalisedQuery.length >= 2 && filteredOutages.length === 0;
+
+  // The stored result carries the query it answered, so a stale result is
+  // discarded by derivation rather than by resetting state in an effect.
+  const currentLookup = lookup?.query === trimmedQuery ? lookup.data : null;
+  const lookingUp = searchingForStation && currentLookup === null;
+
+  // Nothing disrupted matched. That usually means the station is fine, not that
+  // it does not exist — so ask the server, which can answer for stations that
+  // have never appeared in the feed. Debounced, and only on an empty result.
+  useEffect(() => {
+    if (!searchingForStation || currentLookup !== null) return;
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(() => {
+      fetch(`/api/lookup?q=${encodeURIComponent(trimmedQuery)}`, { signal: controller.signal })
+        .then((response) => (response.ok ? response.json() : { found: false }))
+        .then((data: StationLookup) => setLookup({ query: trimmedQuery, data }))
+        .catch(() => {
+          /* aborted or offline: the plain empty state stays on screen */
+        });
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [trimmedQuery, searchingForStation, currentLookup]);
 
   return (
     <section aria-labelledby="current-disruptions-heading" className="space-y-4">
@@ -80,9 +113,15 @@ export function CurrentDisruptions({
 
       {/* Announced whenever filtering changes what is on screen. */}
       <p aria-live="polite" className="text-sm text-ink-muted">
-        Showing {filteredOutages.length} of {outages.length} current lift disruption
-        {outages.length === 1 ? "" : "s"}
-        {normalisedQuery.length > 0 ? ` matching “${query.trim()}”` : ""}.
+        {searchingForStation && currentLookup?.found && currentLookup.station ? (
+          `No lift disruption reported at ${currentLookup.station.name}.`
+        ) : (
+          <>
+            {`Showing ${filteredOutages.length} of ${outages.length} current lift disruption`}
+            {outages.length === 1 ? "" : "s"}
+            {normalisedQuery.length > 0 ? ` matching “${query.trim()}”` : ""}.
+          </>
+        )}
       </p>
 
       <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
@@ -103,15 +142,25 @@ export function CurrentDisruptions({
         </div>
 
         <div className="order-1 lg:order-2">
-          <OutageList
-            items={filteredOutages}
-            headingId="current-disruptions-heading"
-            emptyMessage={
-              outages.length === 0
-                ? "No lift disruptions are currently reported by TfL."
-                : "No current disruptions match your search."
-            }
-          />
+          {searchingForStation ? (
+            lookingUp ? (
+              <p className="rounded border border-rule bg-paper px-4 py-6 text-sm text-ink-muted">
+                Checking {trimmedQuery}…
+              </p>
+            ) : currentLookup ? (
+              <StationLookupResult lookup={currentLookup} />
+            ) : (
+              <p className="rounded border border-rule bg-paper px-4 py-6 text-sm text-ink-muted">
+                No current disruptions match your search.
+              </p>
+            )
+          ) : (
+            <OutageList
+              items={filteredOutages}
+              headingId="current-disruptions-heading"
+              emptyMessage="No lift disruptions are currently reported by TfL."
+            />
+          )}
         </div>
       </div>
     </section>
