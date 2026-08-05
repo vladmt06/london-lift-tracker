@@ -141,6 +141,9 @@ describe("interval merging", () => {
 
 describe("duration formatting", () => {
   it("formats compactly", () => {
+    // Zero is no time at all, not a very short outage.
+    expect(formatDuration(0)).toBe("none");
+    expect(formatDurationLong(0)).toBe("none");
     expect(formatDuration(30_000)).toBe("under a minute");
     expect(formatDuration(48 * MINUTE_MS)).toBe("48m");
     expect(formatDuration(2 * HOUR_MS + 14 * MINUTE_MS)).toBe("2h 14m");

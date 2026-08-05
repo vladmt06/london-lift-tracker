@@ -101,6 +101,9 @@ export function outagesToIntervals(outages: OutageLike[], now: Date = new Date()
  */
 export function formatDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "—";
+  // Exactly zero is no time at all. Calling it "under a minute" implied a
+  // station with no outages had once had a very short one.
+  if (ms === 0) return "none";
   if (ms < MINUTE_MS) return "under a minute";
 
   const days = Math.floor(ms / DAY_MS);
@@ -115,6 +118,7 @@ export function formatDuration(ms: number): string {
 /** Spoken form for screen readers: "3 days 4 hours". */
 export function formatDurationLong(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "unknown";
+  if (ms === 0) return "none";
   if (ms < MINUTE_MS) return "under a minute";
 
   const days = Math.floor(ms / DAY_MS);

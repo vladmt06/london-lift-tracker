@@ -310,9 +310,11 @@ export default async function StationPage({ params }: { params: Promise<{ slug: 
             .
           </li>
           <li>
-            {summary.resolutionStatus === "RESOLVED"
-              ? "Coordinates were resolved from TfL's StopPoint API."
-              : "Coordinates are missing or ambiguous, so this station may not appear on the map."}
+            {summary.latitude === null || summary.longitude === null
+              ? "Coordinates are missing or ambiguous, so this station does not appear on the map."
+              : detail.metadataSource === "topology-import"
+                ? "Coordinates are the centroid of this station's mapped areas in TfL's published station data."
+                : "Coordinates were resolved from TfL's StopPoint API."}
           </li>
           <li>
             Durations of active outages are measured to now; they will keep growing until the

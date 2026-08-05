@@ -135,15 +135,16 @@ tests/          unit + integration tests (real PostgreSQL)
 
 | | |
 | --- | --- |
-| **Stations** — every station where a disruption has been observed, ranked by downtime, sortable, with `≥` marking figures that are floors<br>![Stations table](docs/screenshots/stations.png) | **Station detail** — current status, observed metrics and a chronological timeline of every outage<br>![Station detail page](docs/screenshots/station-detail.png) |
+| **Stations** — every London station with a lift, ranked by observed downtime, sortable, with `≥` marking figures that are floors<br>![Stations table](docs/screenshots/stations.png) | **Station detail** — current status, observed metrics and a chronological timeline of every outage<br>![Station detail page](docs/screenshots/station-detail.png) |
 | **Methodology** — what is measured, what is inferred, what is not claimed, and the cadence actually achieved<br>![Methodology page](docs/screenshots/methodology.png) | **Mobile** — list before map, no horizontal scrolling<br><img src="docs/screenshots/homepage-mobile.png" alt="Homepage on a phone" width="300"> |
 
 ### Searching a station that is fine
 
-Only stations that have *had* a disruption exist in the database, so searching a working station
-would otherwise return "no results" — which reads as "not found" rather than "nothing is wrong".
-`GET /api/lookup?q=…` checks our records first, then TfL's StopPoint search, so any London rail
-station resolves and reports its status as of the last successful poll.
+Stations with lifts are all present once the topology import has run, but stations *without* lifts
+— Oxford Circus among them — are deliberately absent, and searching one would otherwise return "no
+results", which reads as "not found" rather than "nothing is wrong". `GET /api/lookup?q=…` checks
+our records first, then TfL's StopPoint search, so any London rail station resolves and reports its
+status as of the last successful poll.
 
 The answer is phrased as "TfL reports no lift disruption here", never "all lifts work": an
 unreported fault is still possible, and plenty of stations have no lifts at all.
@@ -189,8 +190,9 @@ records anywhere in this repository.
 ### Optional topology import
 
 TfL publishes its step-free topology openly, with no key required, at
-`api.tfl.gov.uk/stationdata/tfl-stationdata-detailed.zip` — **569 lifts across 509 stations**, plus
-platforms, ramps and same-level paths.
+`api.tfl.gov.uk/stationdata/tfl-stationdata-detailed.zip` — **569 lifts across 201 stations**, plus
+platforms, ramps and same-level paths. (The archive describes 509 stations in all; the rest have no
+lifts, so there is nothing here to track for them.)
 
 ```bash
 npm run import:topology -- --download                     # enrich stations we already track
@@ -204,7 +206,10 @@ enriches stations already known from the feed, so a bulk import cannot flood the
 stations that have never had an observed outage.
 
 That 569-lift figure is the denominator the site otherwise lacks — the difference between "27 lifts
-disrupted" and "27 of 569". **The app runs perfectly well without this.**
+disrupted" and "27 of 569", which is 4.7%. Lifts.csv also names its station only by opaque id, so
+the importer reads Stations.csv for real names and StationPoints.csv for coordinates (the centroid
+of each station's mapped areas). **The app runs without this, but the numbers read very differently
+with it.**
 
 ---
 
