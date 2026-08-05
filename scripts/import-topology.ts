@@ -89,6 +89,20 @@ async function extractZip(zipPath: string, destination: string): Promise<string[
   return written;
 }
 
+/** Find a free slug, ignoring the station that already owns it. */
+async function uniqueSlug(name: string, ownStationId: string | null): Promise<string> {
+  const base = slugify(name);
+  let candidate = base;
+
+  for (let attempt = 2; attempt < 60; attempt += 1) {
+    const clash = await prisma.station.findUnique({ where: { slug: candidate } });
+    if (!clash || clash.id === ownStationId) return candidate;
+    candidate = `${base}-${attempt}`;
+  }
+
+  return `${base}-${Date.now()}`;
+}
+
 async function listFilesRecursively(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files: string[] = [];
@@ -120,6 +134,8 @@ async function main(): Promise<void> {
     console.info("── CSV files in this archive ─────────────────────────────");
 
     let liftsCsvPath: string | null = null;
+    let stationsCsvPath: string | null = null;
+    let stationPointsCsvPath: string | null = null;
 
     for (const file of csvFiles.sort()) {
       const contents = await readFile(file, "utf8");
@@ -130,6 +146,40 @@ async function main(): Promise<void> {
       console.info(`  headers: ${headers.join(", ")}`);
 
       if (name.toLowerCase().endsWith("lifts.csv")) liftsCsvPath = file;
+      if (name.toLowerCase().endsWith("stations.csv")) stationsCsvPath = file;
+      if (name.toLowerCase().endsWith("stationpoints.csv")) stationPointsCsvPath = file;
+    }
+
+    // Lifts.csv identifies its station only by opaque id, so without these two
+    // a newly created station would be called "910GACTNCTL" and have no map.
+    const stationNames = new Map<string, string>();
+    if (stationsCsvPath) {
+      for (const row of parseCsv(await readFile(stationsCsvPath, "utf8")).rows) {
+        const id = readColumn(row, "UniqueId");
+        const name = readColumn(row, "Name");
+        if (id && name) stationNames.set(id, name);
+      }
+      console.info(`\nStation names available for ${stationNames.size} stations.`);
+    }
+
+    const stationCoordinates = new Map<string, { latitude: number; longitude: number }>();
+    if (stationPointsCsvPath) {
+      const sums = new Map<string, { lat: number; lon: number; n: number }>();
+      for (const row of parseCsv(await readFile(stationPointsCsvPath, "utf8")).rows) {
+        const id = readColumn(row, "StationUniqueId");
+        const lat = Number(readColumn(row, "Lat"));
+        const lon = Number(readColumn(row, "Lon"));
+        if (!id || !Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) {
+          continue;
+        }
+        const acc = sums.get(id) ?? { lat: 0, lon: 0, n: 0 };
+        sums.set(id, { lat: acc.lat + lat, lon: acc.lon + lon, n: acc.n + 1 });
+      }
+      // A station has many mapped areas; their centroid is a fair pin location.
+      for (const [id, acc] of sums) {
+        stationCoordinates.set(id, { latitude: acc.lat / acc.n, longitude: acc.lon / acc.n });
+      }
+      console.info(`Coordinates available for ${stationCoordinates.size} stations.`);
     }
 
     if (!liftsCsvPath) {
@@ -147,6 +197,7 @@ async function main(): Promise<void> {
     let rejected = 0;
     let skippedUnknownStation = 0;
     let stationsCreated = 0;
+    let stationsBackfilled = 0;
     const rejectReasons = new Map<string, number>();
 
     const noteRejection = (reason: string): void => {
@@ -168,6 +219,30 @@ async function main(): Promise<void> {
       }
 
       let station = await prisma.station.findUnique({ where: { tflStationId: stationUniqueId } });
+      const topologyName = stationNames.get(stationUniqueId);
+      const topologyPoint = stationCoordinates.get(stationUniqueId);
+
+      // Backfill anything a previous run, or the disruption feed, left missing —
+      // without overwriting better data resolved from the StopPoint API.
+      if (station) {
+        const namePlaceholder = station.name === station.tflStationId;
+        const patch: Record<string, unknown> = {};
+
+        if (topologyName && namePlaceholder) {
+          patch.name = topologyName;
+          patch.slug = await uniqueSlug(topologyName, station.id);
+        }
+        if (topologyPoint && (station.latitude === null || station.longitude === null)) {
+          patch.latitude = topologyPoint.latitude;
+          patch.longitude = topologyPoint.longitude;
+          patch.resolutionStatus = ResolutionStatus.RESOLVED;
+        }
+
+        if (Object.keys(patch).length > 0) {
+          station = await prisma.station.update({ where: { id: station.id }, data: patch });
+          stationsBackfilled += 1;
+        }
+      }
 
       if (!station) {
         if (!args.createStations) {
@@ -175,19 +250,18 @@ async function main(): Promise<void> {
           continue;
         }
 
-        const name = readColumn(row, "StationName") || stationUniqueId;
-        let slug = slugify(name);
-        // Slugs are unique; disambiguate rather than fail the whole import.
-        for (let attempt = 2; await prisma.station.findUnique({ where: { slug } }); attempt += 1) {
-          slug = `${slugify(name)}-${attempt}`;
-        }
+        const name = topologyName || readColumn(row, "StationName") || stationUniqueId;
 
         station = await prisma.station.create({
           data: {
             tflStationId: stationUniqueId,
             name,
-            slug,
-            resolutionStatus: ResolutionStatus.UNRESOLVED,
+            slug: await uniqueSlug(name, null),
+            latitude: topologyPoint?.latitude ?? null,
+            longitude: topologyPoint?.longitude ?? null,
+            resolutionStatus: topologyPoint
+              ? ResolutionStatus.RESOLVED
+              : ResolutionStatus.UNRESOLVED,
             metadataSource: "topology-import",
             rawMetadata: row,
           },
@@ -235,6 +309,7 @@ async function main(): Promise<void> {
       console.info(`  – ${reason}: ${count}`);
     }
     console.info(`Skipped, station unknown: ${skippedUnknownStation}`);
+    console.info(`Stations backfilled    : ${stationsBackfilled}  (name and/or coordinates)`);
     if (args.createStations) {
       console.info(`Stations created       : ${stationsCreated}`);
     } else if (skippedUnknownStation > 0) {

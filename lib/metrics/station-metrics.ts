@@ -86,7 +86,7 @@ export type StationSummary = {
   hasOngoingSinceCollectionStart: boolean;
 };
 
-type Db = Pick<PrismaClient, "pollRun" | "outage" | "station">;
+type Db = Pick<PrismaClient, "pollRun" | "outage" | "station" | "lift">;
 
 const outageWithRelations = {
   include: {
@@ -106,6 +106,29 @@ export async function getCollectionStartedAt(prisma: Db = defaultPrisma): Promis
   });
 
   return first?.startedAt ?? null;
+}
+
+export type LiftInventory = {
+  /** Lifts known from TfL's published step-free topology. Zero if not imported. */
+  totalLifts: number;
+  stationsWithLifts: number;
+};
+
+/**
+ * The denominator. Without it "27 lifts disrupted" reads as a network in
+ * collapse rather than 4.7% of them, which is what it is. Populated by
+ * `npm run import:topology`; zero until that has been run, in which case the UI
+ * simply omits the comparison rather than inventing one.
+ */
+export async function getLiftInventory(
+  prisma: Pick<PrismaClient, "lift"> = defaultPrisma,
+): Promise<LiftInventory> {
+  const [totalLifts, stationGroups] = await Promise.all([
+    prisma.lift.count(),
+    prisma.lift.groupBy({ by: ["stationId"] }),
+  ]);
+
+  return { totalLifts, stationsWithLifts: stationGroups.length };
 }
 
 export type CollectionCadence = {
@@ -558,17 +581,19 @@ export type DashboardData = {
   >;
   topStations: StationSummary[];
   unresolvedStationCount: number;
+  inventory: LiftInventory;
 };
 
 export async function getDashboardData(
   prisma: Db = defaultPrisma,
   now: Date = new Date(),
 ): Promise<DashboardData> {
-  const [feedHealth, activeOutages, recentlyResolved, summaries] = await Promise.all([
+  const [feedHealth, activeOutages, recentlyResolved, summaries, inventory] = await Promise.all([
     getFeedHealth(prisma, now),
     getActiveOutages(prisma, now),
     getRecentlyResolvedOutages(prisma, now),
     getStationSummaries(prisma, now),
+    getLiftInventory(prisma as unknown as Pick<PrismaClient, "lift">),
   ]);
 
   const affectedStationIds = new Set(activeOutages.map((outage) => outage.stationId));
@@ -605,5 +630,6 @@ export async function getDashboardData(
     unresolvedStationCount: summaries.filter(
       (summary) => summary.resolutionStatus === ResolutionStatus.UNRESOLVED,
     ).length,
+    inventory,
   };
 }

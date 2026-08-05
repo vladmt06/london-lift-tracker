@@ -161,14 +161,40 @@ export default async function HomePage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard
             label="Lifts disrupted now"
-            value={data.activeOutageCount}
+            value={
+              data.inventory.totalLifts > 0 ? (
+                <>
+                  {data.activeOutageCount}
+                  <span className="text-lg font-semibold text-ink-muted">
+                    {` of ${data.inventory.totalLifts}`}
+                  </span>
+                </>
+              ) : (
+                data.activeOutageCount
+              )
+            }
             tone={data.activeOutageCount > 0 ? "outage" : "ok"}
-            hint="Individual lifts currently reported as disrupted."
+            hint={
+              data.inventory.totalLifts > 0
+                ? `${((data.activeOutageCount / data.inventory.totalLifts) * 100).toFixed(1)}% of the lifts in TfL's published station data.`
+                : "Individual lifts currently reported as disrupted."
+            }
           />
           <MetricCard
             label="Stations affected now"
-            value={data.affectedStationCount}
-            hint="Out of hundreds across London. A disrupted lift does not necessarily mean the station is inaccessible."
+            value={
+              data.inventory.stationsWithLifts > 0 ? (
+                <>
+                  {data.affectedStationCount}
+                  <span className="text-lg font-semibold text-ink-muted">
+                    {` of ${data.inventory.stationsWithLifts}`}
+                  </span>
+                </>
+              ) : (
+                data.affectedStationCount
+              )
+            }
+            hint="A disrupted lift does not necessarily mean the station is inaccessible — most have more than one."
           />
           <MetricCard
             label="Longest current outage"

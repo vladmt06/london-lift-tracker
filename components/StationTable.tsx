@@ -224,8 +224,7 @@ export function StationTable({
       <p aria-live="polite" className="text-sm text-ink-muted">
         {`Showing ${sorted.length} of ${rows.length} `}
         {rows.length === 1 ? "station" : "stations"}
-        {" that have had a lift disruption since collection began. Stations with none reported "}
-        {"do not appear at all."}
+        {" with lifts."}
       </p>
 
       {/* `relative` matters: the visually-hidden sort hints are absolutely

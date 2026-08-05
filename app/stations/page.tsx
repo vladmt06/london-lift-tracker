@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Stations",
   description:
-    "Every London station where a lift disruption has been observed since collection began, " +
-    "ranked by observed downtime.",
+    "Every London station with a lift, showing which have a disruption reported now and " +
+    "which have had one since collection began.",
 };
 
 export default async function StationsPage() {
@@ -55,7 +55,7 @@ export default async function StationsPage() {
     <div className="space-y-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Stations with observed lift disruptions
+          London stations with lifts
         </h1>
         <p className="max-w-3xl text-ink-muted">
           {collectionStartedLabel ? (
@@ -70,23 +70,21 @@ export default async function StationsPage() {
           )}
         </p>
         <p className="max-w-3xl rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
-          <strong className="font-semibold">This is not a list of London stations.</strong>
-          {" A station appears here only once TfL has reported a lift disruption at it. "}
+          {`Every one of the ${rows.length} stations with a lift in TfL's published station data, `}
+          {"whether or not anything has ever gone wrong there. "}
           {activeStationCount > 0 ? (
             <>
-              {"Right now "}
               <strong className="font-semibold">{activeStationCount}</strong>
-              {` of these ${rows.length} stations `}
-              {activeStationCount === 1 ? "has" : "have"}
-              {" a lift disruption; the rest are listed because of an earlier one. The hundreds "}
-              {"of London stations with no reported disruption are absent entirely."}
+              {activeStationCount === 1 ? " has" : " have"}
+              {" a lift disruption right now; the rest are clear."}
             </>
           ) : (
             <>
-              {"None of them has a disruption right now — they are listed because of earlier "}
-              {"ones. Stations with no reported disruption are absent entirely."}
+              <strong className="font-semibold">None</strong>
+              {" has a lift disruption right now."}
             </>
           )}
+          {" Stations with no lifts at all are not listed, because there is nothing here to track."}
         </p>
         {resolvedOutageTotal === 0 ? (
           <p className="max-w-3xl rounded border border-rule bg-paper px-4 py-3 text-sm text-ink">
